@@ -6,6 +6,7 @@ import os
 import csv
 from matplotlib import pyplot as plt
 import multiprocessing
+import pickle
 
 spec = re.compile(r"spec$")
 txt = re.compile(r"txt$")
@@ -27,6 +28,13 @@ class Star:
         plt.ylabel("Normalized flux")
         plt.plot(numpy.arange(len(self.data)),self.data)
         plt.show()
+    def save(self, filename):
+        with open(filename, "wb") as f:
+            pickle.dump(self,f)
+    @classmethod
+    def load(cls, filename):
+        with open(filename, "rb") as f:
+            return pickle.load(f)
 
 class ProtoStar:
     def __init__(self, temp, data):
@@ -79,7 +87,7 @@ def parseManyTars(dirName):
     return pool.imap(
         parseTar,
         [os.path.join(dirName,file) for file in dirContent],
-        10
+        1
     )
 
 def middle(arr):
@@ -99,6 +107,9 @@ def resample(start, end, count, protostar):
     star = Star(protostar.temp, result)
     return star
 
-def main(dirName):
+def main(dirName, targetDirName):
     stars = parseManyTars(dirName)
-    return stars
+    for i, star in enumerate(stars):
+        filename = '{:05d}.star'.format(i)
+        star.save(os.path.join(targetDirName, filename))
+        print(star)
