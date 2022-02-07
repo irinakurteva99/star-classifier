@@ -5,6 +5,7 @@ from io import StringIO
 import os
 import csv
 from matplotlib import pyplot as plt
+import multiprocessing
 
 spec = re.compile(r"spec$")
 txt = re.compile(r"txt$")
@@ -74,7 +75,12 @@ def parseTar(tarName):
 
 def parseManyTars(dirName):
     dirContent = os.listdir(dirName)
-    return (parseTar(os.path.join(dirName,file)) for file in dirContent)
+    pool = multiprocessing.Pool()
+    return pool.imap(
+        parseTar,
+        [os.path.join(dirName,file) for file in dirContent],
+        10
+    )
 
 def middle(arr):
     return sum(arr)/len(arr)
@@ -95,5 +101,4 @@ def resample(start, end, count, protostar):
 
 def main(dirName):
     stars = parseManyTars(dirName)
-    for star in stars:
-        print(star)
+    return stars
