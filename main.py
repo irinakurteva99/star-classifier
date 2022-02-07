@@ -4,6 +4,7 @@ import numpy
 from io import StringIO
 import os
 import csv
+from matplotlib import pyplot as plt
 
 spec = re.compile(r"spec$")
 txt = re.compile(r"txt$")
@@ -14,13 +15,33 @@ leading_spaces = re.compile(r"^ +", re.MULTILINE)
 class Star:
     def __init__(self, temp, data):
         self.temp = temp
+        self.data = data
+    def __repr__(self):
+        return "Star(Temp: {} Data: {}...)".format(
+                self.temp, ', '.join([str(x) for x in self.data[0:5]])
+        )
+    def plot(self):
+        plt.title("Star plot")
+        plt.xlabel("Index")
+        plt.ylabel("Normalized flux")
+        plt.plot(numpy.arange(len(self.data)),self.data)
+        plt.show()
+
+class ProtoStar:
+    def __init__(self, temp, data):
+        self.temp = temp
         self.spec = data[:,2]
         self.start = data[0,0]
-        self.col = data[:,0]
-        self.res = self.col[1] - self.col[0]
-        self.length = len(self.col)
+        self.wavelen = data[:,0]
+        self.length = len(self.wavelen)
     def __repr__(self):
-        return "Temp: {} Start: {} Res: {} Len: {}".format(self.temp, self.start, self.res, self.length)
+        return "ProtoStar(Temp: {} Start: {} Len: {})".format(self.temp, self.start, self.length)
+    def plot(self):
+        plt.title("Protostar plot")
+        plt.xlabel("Angstooioms")
+        plt.ylabel("Normalized flux")
+        plt.plot(self.wavelen,self.spec)
+        plt.show()
 
 def readFile(tr, file):
     reader = tr.extractfile(file)
@@ -49,11 +70,28 @@ def parseTar(tarName):
     specFile = re.sub(leading_spaces, '', specFile)
 
     data = numpy.genfromtxt(StringIO(specFile), delimiter=" ")
-    return Star(temp, data)
+    return resample(3000, 11000, 2000, ProtoStar(temp, data))
 
 def parseManyTars(dirName):
     dirContent = os.listdir(dirName)
     return (parseTar(os.path.join(dirName,file)) for file in dirContent)
+
+def middle(arr):
+    return sum(arr)/len(arr)
+
+def resample(start, end, count, protostar):
+    j = 0
+    dist = (end - start) / count
+    result = numpy.empty(count)
+    for i in range(count):
+        arr = []
+        currend = start + (i + 1) * dist
+        while protostar.wavelen[j] < currend:
+            arr.append(protostar.spec[j])
+            j+=1
+        result[i] = middle(arr)
+    star = Star(protostar.temp, result)
+    return star
 
 def main(dirName):
     stars = parseManyTars(dirName)
