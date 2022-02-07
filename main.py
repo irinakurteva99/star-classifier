@@ -3,6 +3,7 @@ import re
 import numpy
 from io import StringIO
 import os
+import csv
 
 spec = re.compile(r"spec$")
 txt = re.compile(r"txt$")
@@ -11,11 +12,15 @@ spaces = re.compile(r" +", re.MULTILINE)
 leading_spaces = re.compile(r"^ +", re.MULTILINE)
 
 class Star:
-    def __init__(self, temp, spec):
+    def __init__(self, temp, data):
         self.temp = temp
-        self.spec = spec
+        self.spec = data[:,2]
+        self.start = data[0,0]
+        self.col = data[:,0]
+        self.res = self.col[1] - self.col[0]
+        self.length = len(self.col)
     def __repr__(self):
-        return "Temp: {}".format(self.temp)
+        return "Temp: {} Start: {} Res: {} Len: {}".format(self.temp, self.start, self.res, self.length)
 
 def readFile(tr, file):
     reader = tr.extractfile(file)
@@ -42,8 +47,9 @@ def parseTar(tarName):
     temp = int(teff.search(txtFile).group(1))
     specFile = re.sub(spaces, ' ', specFile)
     specFile = re.sub(leading_spaces, '', specFile)
+
     data = numpy.genfromtxt(StringIO(specFile), delimiter=" ")
-    return Star(temp, data[:,2])
+    return Star(temp, data)
 
 def parseManyTars(dirName):
     dirContent = os.listdir(dirName)
