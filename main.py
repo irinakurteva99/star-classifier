@@ -118,9 +118,13 @@ def resample(start, end, count, protostar):
     star = Star(protostar.temp, result)
     return star
 
-def main(dirName, targetDirName):
+def parseStarDir(dirName, targetDirName):
     stars = parseManyTars(dirName)
     for i, star in enumerate(stars):
         filename = '{:05d}.star'.format(i)
         star.save(os.path.join(targetDirName, filename))
         print(star)
+
+def loadStars(dirName):
+    fileList = os.listdir(dirName)
+    return [Star.load(os.path.join(dirName, file)) for file in fileList]
