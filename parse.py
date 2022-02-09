@@ -7,6 +7,7 @@ import csv
 import multiprocessing
 
 from models import Star, ProtoStar
+import config
 
 spec = re.compile(r"spec$")
 txt = re.compile(r"txt$")
@@ -44,7 +45,7 @@ def parseTar(tarName):
     specFile = re.sub(leading_spaces, '', specFile)
 
     data = numpy.genfromtxt(StringIO(specFile), delimiter=" ")
-    return resample(3000, 11000, 2000, ProtoStar(temp, data))
+    return resample(config.startA, config.endA, config.sampleSize, ProtoStar(temp, data))
 
 def parseManyTars(dirName):
     dirContent = os.listdir(dirName)
