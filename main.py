@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
+import sys
 
 from config import sampleSize
 from dataset import StarDataset
@@ -63,15 +64,24 @@ class MyNetwork:
         lossfun = nn.MSELoss()
         avgLoss = 0
         avgC = 0
+        accuracyEls = 0
+        accuracy = 0
+        bigAcc = 0
         for flux, temp in data:
             output = self.net(flux)
-            if avgC == 0:
-                print(output, temp)
+            # if avgC == 0:
+            #     print(output, temp)
             loss = lossfun(output, temp)
             avgLoss += float(loss)
             avgC += 1
+            dists = torch.abs(output - temp)
+            accuracy += len(dists[dists < 500 / 10000])
+            bigAcc += len(dists[dists < 1000 / 10000])
+            accuracyEls += len(output)
         avgLoss /= avgC
+        print('{} Accuracy +-500: {:.2f}% Accuracy +-1000: {:.2f}%'.format(typ, accuracy / accuracyEls * 100, bigAcc / accuracyEls * 100))
         print('Avg {} Loss: {}'.format(typ, avgLoss))
+        sys.stdout.flush()
 
 if __name__ == '__main__':
     MyNetwork().train()
