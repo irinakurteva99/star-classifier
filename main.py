@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.optim.lr_scheduler import ExponentialLR
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 
 from config import sampleSize
@@ -21,38 +21,40 @@ class Net(nn.Module):
         x = torch.flatten(x)
         return x
 
-def do_stuff2():
-    net = Net()
-    print(net)
+class MyNetwork:
 
-    optimizer = optim.SGD(net.parameters(), lr=0.0001)
-    criterion = nn.MSELoss()
-    scheduler = ExponentialLR(optimizer, gamma=0.9)
+    def __init__(self):
+        self.net = Net()
 
-    transform = lambda star: (star.data, float(star.temp) / 10000)
-    train = StarDataset("/home/ikurteva/ai/stars/train", transform)
+        self.optimizer = optim.SGD(self.net.parameters(), lr=0.001)
+        self.criterion = nn.MSELoss()
+        self.scheduler = ReduceLROnPlateau(self.optimizer, verbose=True)
 
-    trainLoader = DataLoader(train, batch_size=10, shuffle=False)
+        self.transform = lambda star: (star.data, float(star.temp) / 10000)
+        self.trainSet = StarDataset("/home/ikurteva/ai/stars/train", self.transform)
+
+        self.trainLoader = DataLoader(self.trainSet, batch_size=10, shuffle=False)
+
+    def train(self):
+        for epoch in range(100):
+            avgLoss = 0
+            avgC = 0
+            for flux, temp in self.trainLoader:
+                self.optimizer.zero_grad()
+                output = self.net(flux)
+
+                loss = self.criterion(output, temp)
+                avgLoss += float(loss)
+                avgC += 1
+                # print(output, temp)
+                # print(loss)
+
+                loss.backward()
+                self.optimizer.step()
     
-    for epoch in range(100):
-        avgLoss = 0
-        avgC = 0
-        for flux, temp in trainLoader:
-            optimizer.zero_grad()
-            output = net(flux)
-   
-            loss = criterion(output, temp)
-            avgLoss += float(loss)
-            avgC += 1
-            # print(output, temp)
-            # print(loss)
-
-            loss.backward()
-            optimizer.step()
-
-        avgLoss /= avgC
-        print(avgLoss)
-        scheduler.step()
+            avgLoss /= avgC
+            print(avgLoss)
+            self.scheduler.step(loss)
 
 if __name__ == '__main__':
-    do_stuff2()
+    MyNetwork().train()
