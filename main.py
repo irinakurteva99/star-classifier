@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.data import DataLoader
 
 from config import sampleSize
@@ -26,6 +27,7 @@ def do_stuff2():
 
     optimizer = optim.SGD(net.parameters(), lr=0.0001)
     criterion = nn.MSELoss()
+    scheduler = ExponentialLR(optimizer, gamma=0.9)
 
     transform = lambda star: (star.data, float(star.temp) / 10000)
     train = StarDataset("/home/ikurteva/ai/stars/train", transform)
@@ -50,6 +52,7 @@ def do_stuff2():
 
         avgLoss /= avgC
         print(avgLoss)
+        scheduler.step()
 
 if __name__ == '__main__':
     do_stuff2()
