@@ -38,11 +38,11 @@ class MyNetwork:
         self.trainSet = StarDataset("/home/ikurteva/ai/stars/train", self.transform)
         self.testSet = StarDataset("/home/ikurteva/ai/stars/test", self.transform)
 
-        self.trainLoader = DataLoader(self.trainSet, batch_size=10, shuffle=False)
-        self.testLoader = DataLoader(self.testSet, batch_size=10, shuffle=False)
+        self.trainLoader = DataLoader(self.trainSet, batch_size=32, shuffle=False)
+        self.testLoader = DataLoader(self.testSet, batch_size=32, shuffle=False)
 
     def train(self):
-        for epoch in range(100):
+        for epoch in range(1000):
             for flux, temp in self.trainLoader:
                 self.optimizer.zero_grad()
                 output = self.net(flux)
@@ -65,6 +65,8 @@ class MyNetwork:
         avgC = 0
         for flux, temp in data:
             output = self.net(flux)
+            if avgC == 0:
+                print(output, temp)
             loss = lossfun(output, temp)
             avgLoss += float(loss)
             avgC += 1
