@@ -4,6 +4,8 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 import sys
+import numpy as np
+import pickle
 
 from config import sampleSize
 from dataset import StarDataset
@@ -27,7 +29,6 @@ class Net(nn.Module):
         return x
 
 class MyNetwork:
-
     def __init__(self):
         self.net = Net()
 
@@ -35,12 +36,33 @@ class MyNetwork:
         self.criterion = nn.MSELoss()
         self.scheduler = ReduceLROnPlateau(self.optimizer, verbose=True)
 
-        self.transform = lambda star: (star.data, float(star.temp) / 10000)
+        self.transform = lambda star: (star.data, float(star.temp))
+        self.trainSet = StarDataset("/home/ikurteva/ai/stars/train", self.transform)
+        self.testSet = StarDataset("/home/ikurteva/ai/stars/test", self.transform)
+
+        (self.meanT, self.stdT, self.meanF, self.stdF) = self.computeNormParams(self.trainSet)
+        with open('/tmp/norm_data', 'wb') as f:
+            pickle.dump((self.meanT, self.stdT, self.meanF, self.stdF), f)
+
+        self.transform = lambda star: ((star.data - self.meanF) / self.stdF, (float(star.temp) - self.meanT) / self.stdT)
         self.trainSet = StarDataset("/home/ikurteva/ai/stars/train", self.transform)
         self.testSet = StarDataset("/home/ikurteva/ai/stars/test", self.transform)
 
         self.trainLoader = DataLoader(self.trainSet, batch_size=32, shuffle=False)
         self.testLoader = DataLoader(self.testSet, batch_size=32, shuffle=False)
+
+    def deNormalise(self, flux, temp):
+        return (flux * self.stdF + self.meanF, temp * self.stdT + self.meanT)
+
+    def computeNormParams(self, dataset):
+        i = 0
+        temps = np.arange(len(dataset))
+        fluxes = np.empty([len(dataset), sampleSize])
+        for flux, temp in dataset:
+            temps[i] = temp
+            fluxes[i] = flux
+            i += 1
+        return (np.mean(temps), np.std(temps), np.mean(fluxes, axis=0), np.std(fluxes, axis=0))
 
     def train(self):
         for epoch in range(1000):
@@ -68,15 +90,19 @@ class MyNetwork:
         accuracy = 0
         bigAcc = 0
         for flux, temp in data:
+            (flux, temp) = self.deNormalise(flux, temp)
+
             output = self.net(flux)
-            # if avgC == 0:
-            #     print(output, temp)
+            (_, output) = self.deNormalise(flux, output)
+
+            if avgC == 0:
+                print(output, temp)
             loss = lossfun(output, temp)
             avgLoss += float(loss)
             avgC += 1
             dists = torch.abs(output - temp)
-            accuracy += len(dists[dists < 500 / 10000])
-            bigAcc += len(dists[dists < 1000 / 10000])
+            accuracy += len(dists[dists < 500])
+            bigAcc += len(dists[dists < 1000])
             accuracyEls += len(output)
         avgLoss /= avgC
         print('{} Accuracy +-500: {:.2f}% Accuracy +-1000: {:.2f}%'.format(typ, accuracy / accuracyEls * 100, bigAcc / accuracyEls * 100))

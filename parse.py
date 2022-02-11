@@ -62,9 +62,10 @@ def parseManyTars(dirName):
 def middle(arr):
     if not arr:
         raise EmptyBucketException("Oh no")
-    return sum(arr)/len(arr)
+    return min(arr)
 
 def resample(start, end, count, protostar):
+    # protostar.plot()
     j = 0
     dist = (end - start) / count
     result = numpy.empty(count)
@@ -76,6 +77,8 @@ def resample(start, end, count, protostar):
             j+=1
         result[i] = middle(arr)
     star = Star(protostar.temp, result)
+    # star.plot()
+    # sys.exit(0)
     return star
 
 def parseStarDir(dirName, targetDirName):
