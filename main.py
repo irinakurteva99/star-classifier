@@ -39,8 +39,8 @@ class MyNetwork:
         self.trainSet = StarDataset("/home/ikurteva/ai/stars/train", self.transform)
         self.testSet = StarDataset("/home/ikurteva/ai/stars/test", self.transform)
 
-        self.trainLoader = DataLoader(self.trainSet, batch_size=32, shuffle=True)
-        self.testLoader = DataLoader(self.testSet, batch_size=32, shuffle=True)
+        self.trainLoader = DataLoader(self.trainSet, batch_size=32, shuffle=False)
+        self.testLoader = DataLoader(self.testSet, batch_size=32, shuffle=False)
 
     def train(self):
         for epoch in range(1000):
