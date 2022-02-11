@@ -5,6 +5,7 @@ from io import StringIO
 import os
 import csv
 import multiprocessing
+import sys
 
 from models import Star, ProtoStar
 import config
@@ -87,7 +88,7 @@ def loadStars(dirName):
     return [Star.load(os.path.join(dirName, file)) for file in fileList]
 
 def main():
-    parseStarDir(os.args[1], os.args[2])
+    parseStarDir(sys.argv[1], sys.argv[2])
 
 if __name__ == '__main__':
     main()
