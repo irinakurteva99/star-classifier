@@ -1,12 +1,14 @@
+import sys
+
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import numpy as np
 
 from dataset import StarDataset
 
-def plotTemps():
+def plotTemps(starDir):
     transform = lambda star: (star.data, float(star.temp))
-    trainSet = StarDataset("/home/ikurteva/ai/stars1", transform)
+    trainSet = StarDataset(starDir, transform)
 
     trainLoader = DataLoader(trainSet, batch_size=32, shuffle=False)
 
@@ -26,4 +28,4 @@ def plotTemps():
     plt.savefig('M.png')
 
 if __name__ == '__main__':
-    plotTemps()
+    plotTemps(sys.argv[1])

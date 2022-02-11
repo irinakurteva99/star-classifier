@@ -7,6 +7,8 @@ import csv
 import multiprocessing
 import sys
 
+from tqdm import tqdm
+
 from models import Star, ProtoStar
 import config
 
@@ -55,7 +57,7 @@ def parseManyTars(dirName):
         parseTar,
         [os.path.join(dirName,file) for file in dirContent],
         1
-    )
+    ), len(dirContent)
 
 def middle(arr):
     if not arr:
@@ -77,11 +79,11 @@ def resample(start, end, count, protostar):
     return star
 
 def parseStarDir(dirName, targetDirName):
-    stars = parseManyTars(dirName)
-    for i, star in enumerate(stars):
+    stars, total = parseManyTars(dirName)
+    for i, star in tqdm(enumerate(stars), total=total):
         filename = '{:05d}.star'.format(i)
         star.save(os.path.join(targetDirName, filename))
-        print(star)
+        # print(star)
 
 def loadStars(dirName):
     fileList = os.listdir(dirName)
