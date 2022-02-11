@@ -65,6 +65,7 @@ class MyNetwork:
         return (np.mean(temps), np.std(temps), np.mean(fluxes, axis=0), np.std(fluxes, axis=0))
 
     def train(self):
+        loss = 0
         for epoch in range(1000):
             for flux, temp in self.trainLoader:
                 self.optimizer.zero_grad()
@@ -79,6 +80,7 @@ class MyNetwork:
     
             self.scheduler.step(loss)
             if epoch % 5 == 0:
+                print('Epoch {}, last training loss: {}'.format(epoch, loss))
                 self.test(self.trainLoader, "train")
                 self.test(self.testLoader, "test")
 
@@ -95,8 +97,8 @@ class MyNetwork:
             output = self.net(flux)
             (_, output) = self.deNormalise(flux, output)
 
-            if avgC == 0:
-                print(output, temp)
+            # if avgC == 0:
+            #     print(output, temp)
             loss = lossfun(output, temp)
             avgLoss += float(loss)
             avgC += 1
